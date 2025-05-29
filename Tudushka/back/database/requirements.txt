@@ -4,3 +4,4 @@ sqlalchemy
 databases[postgresql]
 asyncpg
 pydantic
+psycopg2-binary

@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from routes_task import router as task_router
-from database.database import database, engine, metadata
+from back.Api.routes_task import router as task_router
+from back.database.database import database, engine, metadata, DATABASE_URL
 import uvicorn
+
+print("DATABASE_URL:", repr(DATABASE_URL))
+print("DATABASE_URL raw bytes:", DATABASE_URL.encode("utf-8"))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

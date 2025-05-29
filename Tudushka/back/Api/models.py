@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from sqlalchemy import Table, Column, Integer, String, Boolean
-from database.database import metadata
+from back.database.database import metadata
 
 tasks_table = Table(
     "tasks",

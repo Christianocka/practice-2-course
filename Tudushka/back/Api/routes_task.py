@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
-from models import TaskScheme, tasks_table
-from database.database import database
+from back.Api.models import TaskScheme, tasks_table
+from back.database.database import database
 
 router = APIRouter()
 
