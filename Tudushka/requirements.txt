@@ -5,3 +5,8 @@ databases[postgresql]
 asyncpg
 pydantic
 psycopg2-binary
+python-jose
+passlib[bcrypt]
+email-validator
+alembic
+jose
