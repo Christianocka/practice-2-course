@@ -1,5 +1,6 @@
 from database.database import database
 from back.Api.models.user_models import users_table
+from back.security import verify_password
 
 class UserService:
     @staticmethod
@@ -16,3 +17,9 @@ class UserService:
     async def get_user_by_id(user_id: int):
         query = users_table.select().where(users_table.c.id == user_id)
         return await database.fetch_one(query)
+
+async def authenticate_user(username: str, password: str):
+    user = await UserService.get_user_by_email(username)
+    if user and verify_password(password, user["hashed_password"]):
+        return user
+    return None

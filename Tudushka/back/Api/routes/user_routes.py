@@ -1,38 +1,34 @@
-from fastapi import APIRouter, HTTPException, Depends, Header
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
-from passlib.context import CryptContext
 from jose import jwt, JWTError
-from back.Api.services.user_service import UserService
+from back.Api.services.user_service import UserService, authenticate_user
 from back.Api.models.user_models import UserCreate, UserLogin
-import os
+from back.settings import SECRET_KEY, ALGORITHM
+from back.security import hash_password, verify_password
 
-SECRET_KEY = os.getenv("SECRET_KEY", "supersecret")
-ALGORITHM = "HS256"
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 router = APIRouter()
 
-def hash_password(password: str):
-    return pwd_context.hash(password)
-
-def verify_password(plain, hashed):
-    return pwd_context.verify(plain, hashed)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")  # путь, где выдают токен
 
 def create_access_token(data: dict):
     return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
-async def get_current_user_id(authorization: str = Header(...)):
+def get_current_user_id(token: str = Depends(oauth2_scheme)):
     try:
-        scheme, token = authorization.split()
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload["user_id"]
-    except Exception as e:
-        raise HTTPException(status_code=401, detail="Не авторизован") from e
+        user_id = payload.get("user_id")
+        if user_id is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        return user_id
+    except JWTError as e:
+        raise HTTPException(status_code=401, detail="Invalid token") from e
 
 @router.post(
     "/register"
 )
 async def register(user: UserCreate):
-    existing = await UserService.get_user_by_email(user.email)
+    existing = await UserService.get_user_by_email(user.username)
     if existing:
         raise HTTPException(status_code=400, detail="Пользователь уже существует")
     hashed = hash_password(user.password)
@@ -40,14 +36,14 @@ async def register(user: UserCreate):
     user_dict["hashed_password"] = hashed
     del user_dict["password"]
     user_id = await UserService.create_user(user_dict)
-    return {"id": user_id, "email": user.email}
+    return {"id": user_id, "email": user.username}
 
 @router.post(
     "/login"
 )
-async def login(user: UserLogin):
-    db_user = await UserService.get_user_by_email(user.email)
-    if not db_user or not verify_password(user.password, db_user["hashed_password"]):
-        raise HTTPException(status_code=401, detail="Неверные email или пароль")
-    token = create_access_token({"sub": db_user["email"], "user_id": db_user["id"]})
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = await authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(status_code=400, detail="Incorrect username or password")
+    token = create_access_token({"user_id": user["id"]})
     return {"access_token": token, "token_type": "bearer"}

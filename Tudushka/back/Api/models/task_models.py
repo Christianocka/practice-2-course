@@ -18,4 +18,3 @@ class TaskScheme(BaseModel):
 
 class TaskCreateScheme(BaseModel):
     task: str = Field(min_length=1, max_length=100)
-    done: bool = False

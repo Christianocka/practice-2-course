@@ -11,7 +11,7 @@ users_table = Table(
 )
 
 class UserCreate(BaseModel):
-    email: EmailStr
+    username: EmailStr
     password: str
 
 class UserLogin(BaseModel):

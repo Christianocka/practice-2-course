@@ -4,6 +4,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
+from sqlalchemy import MetaData
 
 from alembic import context
 
@@ -11,8 +12,9 @@ from alembic import context
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Импортируем metadata из ваших моделей
-from back.Api import models
-target_metadata = models.metadata
+from back.Api.models.task_models import metadata as task_metadata
+# Если у вас один metadata для всех моделей:
+target_metadata = task_metadata
 
 # Чтение конфигурации Alembic
 config = context.config
@@ -36,8 +38,12 @@ def run_migrations_offline():
 
 def run_migrations_online():
     """Run migrations in 'online' mode."""
+    section = config.get_section(config.config_ini_section)
+    if section is None:
+        raise RuntimeError("Could not load config section from alembic.ini")
+
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
+        section,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

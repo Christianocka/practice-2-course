@@ -35,14 +35,79 @@ docker-compose up --build
 ## Основные эндпоинты
 
 - `GET /tasks` — получить список задач
-- `POST /tasks` — добавить задачу (требует JSON: `{ "id": int, "task": str, "done": bool }`)
-- `PUT /toggle/{id}` — изменить статус задачи (выполнена/не выполнена)
-- `DELETE /delete/{id}` — удалить задачу
+- `POST /tasks` — добавить задачу
+- `PUT /tasks/{id}` — обновить задачу
+- `PATCH /tasks/{id}/toggle_done` — изменить статус задачи (выполнена/не выполнена)
+- `DELETE /tasks/{id}` — удалить задачу
+- `POST /register` — регистрация пользователя
+- `POST /login` — получение токена
 
-## Пример запроса
+## Примеры запросов к API
+
+### Регистрация пользователя
 
 ```sh
-curl -X POST "http://localhost:8000/tasks" -H "Content-Type: application/json" -d '{"id": 1, "task": "Купить хлеб", "done": false}'
+curl -X POST "http://localhost:8000/register" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "yourpassword"}'
+```
+
+### Авторизация (получение токена)
+
+```sh
+curl -X POST "http://localhost:8000/login" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d 'username=user@example.com&password=yourpassword'
+```
+**Ответ:**  
+```json
+{"access_token": "<ваш токен>", "token_type": "bearer"}
+```
+
+### Создание задачи
+
+```sh
+curl -X POST "http://localhost:8000/tasks" \
+  -H "Authorization: Bearer <ваш токен>" \
+  -H "Content-Type: application/json" \
+  -d '{"task": "Купить хлеб"}'
+```
+
+### Получение всех задач
+
+```sh
+curl -X GET "http://localhost:8000/tasks" \
+  -H "Authorization: Bearer <ваш токен>"
+```
+
+### Получение задачи по id
+
+```sh
+curl -X GET "http://localhost:8000/tasks/1" \
+  -H "Authorization: Bearer <ваш токен>"
+```
+
+### Обновление задачи
+
+```sh
+curl -X PUT "http://localhost:8000/tasks/1" \
+  -H "Authorization: Bearer <ваш токен>" \
+  -H "Content-Type: application/json" \
+  -d '{"task": "Купить молоко"}'
+```
+
+### Удаление задачи
+
+```sh
+curl -X DELETE "http://localhost:8000/tasks/1" \
+  -H "Authorization: Bearer <ваш токен>"
+```
+
+### Переключение статуса задачи
+
+```sh
+curl -X PATCH "http://localhost:8000/tasks/1/toggle_done" \
+  -H "Authorization: Bearer <ваш токен>"
 ```
 
 ## Зависимости
@@ -54,6 +119,9 @@ curl -X POST "http://localhost:8000/tasks" -H "Content-Type: application/json" -
 - asyncpg
 - psycopg2-binary
 - pydantic
+- python-jose
+- passlib[bcrypt]
+- alembic
 
 ## Лицензия
 
